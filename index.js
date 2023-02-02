@@ -2,6 +2,7 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const express = require('express');
 const cors = require('cors');
 const { query } = require('express');
+const jwt = require('jsonwebtoken');
 const app = express();
 require('dotenv').config();
 const port = process.env.PORT || 5000;
@@ -26,6 +27,7 @@ async function run(){
         
         const appointmentOptionsCollection = client.db("newDoctors").collection("appointmentOptions");
         const bookingsCollection = client.db("newDoctors").collection("bookings");
+        const usersCollection = client.db("newDoctors").collection("users");
         
         app.get('/appointmentoptions' , async (req,res)=>{
             const date = req.query.date;
@@ -44,16 +46,61 @@ async function run(){
             res.send(options);
         })
 
+        app.get('/userbookings', async (req, res)=>{
+            const email = req.query.email;
+            console.log('token' , req.headers.authorization);
+            const query = {
+                email: email
+            }
+            const alreadyBooked = await bookingsCollection.find(query).toArray();
+            res.send(alreadyBooked)
+        })
+
         app.post('/bookings' , async (req, res)=>{
 
             const bookings = req.body;
             
+            const query = {
+                appointmentDate: bookings.appointmentDate,
+                treatment: bookings.treatment,
+                email: bookings.email
+            }
+
+            const alreadyBooked = await bookingsCollection.find(query).toArray()
+
+            if(alreadyBooked.length>0){
+                const message = `Oops! You have already an "${bookings.treatment}" service on ${bookings.appointmentDate}.`
+                return res.send({acknowledged:false , message})
+            }
 
             const result =  await bookingsCollection.insertOne(bookings)
             res.send(result);
 
 
         } )
+
+        app.get('/jwt', async (req,res) =>{
+            const email = req.query.email;
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            if(user){
+                const token = jwt.sign({email}, process.env.ACCESS_TOKEN , {expiresIn: '1h'} );
+                // console.log(token);
+                return res.send({accessToken: token})
+                
+            }
+            res.status(403).send({accessToken:'access_token'})
+            
+        })
+
+        app.post('/users', async (req,res)=>{
+
+            const user = req.body;
+            console.log(user)
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+
+        })
 
     }
     finally{
