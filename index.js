@@ -112,6 +112,12 @@ async function run(){
             res.send(alreadyBooked)
         })
 
+        app.get('/appointmentSpeciality', async(req,res)=>{
+            const query = {}
+            const  result = await appointmentOptionsCollection.find(query).project({name:1}).toArray()
+            res.send(result);
+        })
+
         app.post('/bookings' , async (req, res)=>{
 
             const bookings = req.body;
