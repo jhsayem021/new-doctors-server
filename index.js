@@ -5,6 +5,7 @@ const { query } = require('express');
 const jwt = require('jsonwebtoken');
 const app = express();
 require('dotenv').config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 // Middleware
@@ -17,13 +18,13 @@ app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.sezawpu.mongodb.net/?retryWrites=true&w=majority`;
 
-console.log(uri);
+// console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
 function verifyJWT(req, res, next) {
 
-    console.log('token', req.headers.authorization);
+    // console.log('token', req.headers.authorization);
     const authHeader = req.headers.authorization;
     if (!authHeader) {
         return res.status(401).send('Unauthorized access')
@@ -166,6 +167,23 @@ async function run() {
             res.send(result);
 
 
+        })
+
+        app.post('/create-payment-intent', async(req,res)=>{
+            const booking = req.body;
+            const price = booking.price;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: "usd",
+                amount: amount,
+                 "payment_method_types": [
+                    "card"
+                 ]
+            })
+            console.log(paymentIntent)
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
         })
 
         app.get('/jwt', async (req, res) => {
