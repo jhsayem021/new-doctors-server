@@ -47,6 +47,7 @@ async function run() {
         const bookingsCollection = client.db("newDoctors").collection("bookings");
         const usersCollection = client.db("newDoctors").collection("users");
         const doctorsCollection = client.db("newDoctors").collection("doctors");
+        const paymentsCollection = client.db("newDoctors").collection("payments");
 
         const verifyAdmin = async (req, res, next) => {
             console.log(req.decoded.email)
@@ -184,6 +185,21 @@ async function run() {
             res.send({
                 clientSecret: paymentIntent.client_secret
             })
+        })
+
+        app.post('/payments', async (req,res)=>{
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId;
+            const filter = {_id: ObjectId(id)}
+            const updateDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transationId
+                }
+            }
+            const updateResult =  await  bookingsCollection.updateOne(filter,updateDoc)
+            res.send(result);
         })
 
         app.get('/jwt', async (req, res) => {
