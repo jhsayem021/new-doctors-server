@@ -1,5 +1,5 @@
 {
-  "name": "new-doctors-server",
+  "name": "fdra-server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -16,7 +16,7 @@
     "git": "^0.1.5",
     "jsonwebtoken": "^9.0.0",
     "mongodb": "^4.13.0",
-    "nodemon": "^2.0.20",
-    "stripe": "^11.10.0"
+    "nodemon": "^2.0.22",
+    "stripe": "^11.16.0"
   }
 }
